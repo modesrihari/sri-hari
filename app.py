@@ -1,19 +1,17 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import numpy as np
 
-# Load the models and scaler
-linear_model = joblib.load('linear_regression_model.joblib')
-ridge_model = joblib.load('ridge_regression_model.joblib')
-scaler = joblib.load('scaler.joblib')
+# Load the linear regression model
+try:
+    linear_model = joblib.load('linear_regression_model.joblib')
+except FileNotFoundError as e:
+    st.error("Model file not found. Please ensure it is in the same directory as the app.")
+    st.stop()  # Stop the app if the file is not found
 
 # Function to make predictions
-def predict_calories(input_data, model_type):
-    if model_type == 'Linear Regression':
-        prediction = linear_model.predict(input_data)
-    else:
-        prediction = ridge_model.predict(input_data)
+def predict_calories(input_data):
+    prediction = linear_model.predict(input_data)
     return prediction
 
 # Streamlit app title
@@ -40,7 +38,6 @@ input_data = pd.DataFrame([features])
 input_data = pd.get_dummies(input_data, columns=['ActivityLevel'], drop_first=True)
 
 # Ensure input_data has the same columns as the training data
-# Adjust this part based on your training dataset's features
 expected_columns = ['TotalSteps', 'TotalDistance', 'Calories', 'SedentaryMinutes',
                     'LightlyActiveMinutes', 'FairlyActiveMinutes', 'VeryActiveMinutes', 'ActivityLevel_Moderate', 'ActivityLevel_High']
 
@@ -51,14 +48,8 @@ for col in expected_columns:
 
 input_data = input_data[expected_columns]
 
-# Select model type for prediction
-model_type = st.sidebar.selectbox("Select Model Type", ["Linear Regression", "Ridge Regression"])
-
 # Predict button
 if st.sidebar.button("Predict"):
-    # Standardize input data
-    input_data_scaled = scaler.transform(input_data)
-    
     # Make prediction
-    prediction = predict_calories(input_data_scaled, model_type)
+    prediction = predict_calories(input_data)
     st.write(f"Predicted Calories: {prediction[0]}")
